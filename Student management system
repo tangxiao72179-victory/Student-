@@ -1,0 +1,89 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+// Persistent database filename constant
+const string DB_FILE = "student_db.txt";
+
+void processRecord(int choice) {
+    string roll, name, age, course, target;
+    
+    // Feature 1: Add Student Record
+    if (choice == 1) {
+        ofstream outFile(DB_FILE, ios::app);
+        cout << "Enter Roll Number: "; getline(cin, roll);
+        cout << "Enter Full Name: ";   getline(cin, name);
+        cout << "Enter Age: ";         getline(cin, age);
+        cout << "Enter Course: ";      getline(cin, course);
+        
+        outFile << roll << "|" << name << "|" << age << "|" << course << "\n";
+        cout << "\n>>> Record saved successfully to database file!\n";
+    } 
+    // Feature 2: Display All Records
+    else if (choice == 2) {
+        ifstream inFile(DB_FILE);
+        if (!inFile) { cout << "\nNo database records found.\n"; return; }
+        
+        cout << "\n" << left << setw(12) << "Roll No" << setw(22) << "Name" << setw(8) << "Age" << "Course\n";
+        cout << string(55, '-') << "\n";
+        
+        while (getline(inFile, roll, '|') && getline(inFile, name, '|') && 
+               getline(inFile, age, '|') && getline(inFile, course)) {
+            cout << left << setw(12) << roll << setw(22) << name << setw(8) << age << course << "\n";
+        }
+        cout << string(55, '-') << "\n";
+    } 
+    // Feature 3 & 4: Update & Delete Student Records
+    else if (choice == 3 || choice == 4) {
+        cout << "Enter Target Roll Number: "; getline(cin, target);
+        ifstream inFile(DB_FILE); ofstream tempFile("temp.txt");
+        bool flag = false;
+        
+        while (getline(inFile, roll, '|') && getline(inFile, name, '|') && 
+               getline(inFile, age, '|') && getline(inFile, course)) {
+            if (roll == target) {
+                flag = true;
+                if (choice == 3) { // If choice is 3, execute Update sequence
+                    cout << "\nRecord Found! Enter New Details:\n";
+                    cout << "Enter New Name: ";   getline(cin, name);
+                    cout << "Enter New Age: ";    getline(cin, age);
+                    cout << "Enter New Course: "; getline(cin, course);
+                    tempFile << roll << "|" << name << "|" << age << "|" << course << "\n";
+                }
+                // If choice is 4 (Delete), the loop skips writing to delete the entry
+            } else {
+                tempFile << roll << "|" << name << "|" << age << "|" << course << "\n";
+            }
+        }
+        inFile.close(); tempFile.close();
+        remove(DB_FILE.c_str()); rename("temp.txt", DB_FILE.c_str());
+        
+        if (flag) cout << "\n>>> Operation successful!\n";
+        else cout << "\n>>> Error: Roll Number not found.\n";
+    }
+}
+
+int main() {
+    int choice;
+    while (true) {
+        cout << "\n=== STUDENT MANAGEMENT MENU ===\n";
+        cout << "1. Add Student\n2. Display All\n3. Update Student\n4. Delete Student\n5. Exit System\n";
+        cout << "Enter Choice (1-5): ";
+        
+        if (!(cin >> choice)) {
+            cout << "Invalid input vector. Enter integer digits.\n";
+            cin.clear(); cin.ignore(10000, '\n'); continue;
+        }
+        cin.ignore(); // Discards the trailing newline character buffer cleanly
+        
+        if (choice == 5) {
+            cout << "\nSession terminated safely. Ready for delivery.\n";
+            break;
+        }
+        processRecord(choice);
+    }
+    return 0;
+}
